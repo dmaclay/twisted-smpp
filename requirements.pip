@@ -1,3 +1,4 @@
 nose
 coverage
+twisted
 git+git://github.com/dmaclay/python-smpp.git

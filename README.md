@@ -10,7 +10,7 @@ To get started with development:
     (ve)$ pip install -r requirements.pip
     (ve)$ python setup.py develop
     (ve)$ python
-    >>> import twisted-smpp
+    >>> import twisted_smpp
     >>>
 
 Run the tests with nose

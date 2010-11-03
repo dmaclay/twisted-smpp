@@ -1,0 +1,5 @@
+*.swp
+*.pyc
+*.egg-info
+ve/
+*_priv.py

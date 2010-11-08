@@ -5,7 +5,7 @@ from twisted.internet.protocol import Protocol, ClientFactory
 from smpp.pdu_builder import *
 
 
-class EsmeTransmitter(Protocol):
+class EsmeTransceiver(Protocol):
 
     def __init__(self):
         self.defaults = {}
@@ -28,8 +28,8 @@ class EsmeTransmitter(Protocol):
     def handleData(self, data):
             pdu = unpack_pdu(data)
             print pdu
-            if pdu['header']['command_id'] == 'bind_transmitter_resp':
-                self.handle_bind_transmitter_resp(pdu)
+            if pdu['header']['command_id'] == 'bind_transceiver_resp':
+                self.handle_bind_transceiver_resp(pdu)
             if pdu['header']['command_id'] == 'submit_sm_resp':
                 self.handle_submit_sm_resp(pdu)
             if pdu['header']['command_id'] == 'submit_multi_resp':
@@ -44,7 +44,7 @@ class EsmeTransmitter(Protocol):
     def connectionMade(self):
         self.state = 'OPEN'
         print 'STATE :', self.state
-        pdu = BindTransmitter(self.sequence_number, **self.defaults)
+        pdu = BindTransceiver(self.sequence_number, **self.defaults)
         self.sequence_number +=1
         self.transport.write(pdu.get_bin())
 
@@ -58,9 +58,9 @@ class EsmeTransmitter(Protocol):
             data = self.popData()
 
 
-    def handle_bind_transmitter_resp(self, pdu):
+    def handle_bind_transceiver_resp(self, pdu):
         if pdu['header']['command_status'] == 'ESME_ROK':
-            self.state = 'BOUND_TX'
+            self.state = 'BOUND_TRX'
             self.submit_sm(
                     short_message = 'gobbledygook',
                     destination_addr = '555',
@@ -122,7 +122,7 @@ class EsmeTransmitter(Protocol):
 
 
 
-class EsmeTransmitterFactory(ClientFactory):
+class EsmeTransceiverFactory(ClientFactory):
 
     def __init__(self):
         self.defaults = {
@@ -141,7 +141,7 @@ class EsmeTransmitterFactory(ClientFactory):
 
     def buildProtocol(self, addr):
         print 'Connected'
-        esme = EsmeTransmitter()
+        esme = EsmeTransceiver()
         esme.loadDefaults(self.defaults)
         return esme
 

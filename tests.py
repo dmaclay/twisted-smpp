@@ -8,7 +8,7 @@ except:pass
 
 
 
-esmeTransFact = EsmeTransmitterFactory()
+esmeTransFact = EsmeTransceiverFactory()
 esmeTransFact.loadDefaults(clickatell_defaults)
 esmeTransFact.loadDefaults(credentials_test.logica)
 print esmeTransFact.defaults

@@ -3,3 +3,4 @@
 *.egg-info
 ve/
 *_priv.py
+*.log

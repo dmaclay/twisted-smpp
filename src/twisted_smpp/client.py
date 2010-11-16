@@ -9,11 +9,11 @@ from smpp.pdu_builder import *
 class EsmeTransceiver(Protocol):
 
     def __init__(self, seq=[1]):
-        self.name = 'EsmeTransciever' + str(seq)
+        self.name = 'Proto' + str(seq)
         print '__init__', self.name
         self.defaults = {}
         self.state = 'CLOSED'
-        print 'STATE :', self.name, ':', self.state
+        print self.name, 'STATE :', self.state
         self.seq = seq
         self.datastream = ''
 
@@ -38,7 +38,7 @@ class EsmeTransceiver(Protocol):
 
     def handleData(self, data):
         pdu = unpack_pdu(data)
-        print pdu
+        print 'INCOMING <<<<', pdu
         if pdu['header']['command_id'] == 'bind_transceiver_resp':
             self.handle_bind_transceiver_resp(pdu)
         if pdu['header']['command_id'] == 'submit_sm_resp':
@@ -49,7 +49,7 @@ class EsmeTransceiver(Protocol):
             self.handle_deliver_sm(pdu)
         if pdu['header']['command_id'] == 'enquire_link_resp':
             self.handle_enquire_link_resp(pdu)
-        print 'STATE :', self.name, ':', self.state
+        print self.name, 'STATE :', self.state
 
 
     def loadDefaults(self, defaults):
@@ -58,19 +58,25 @@ class EsmeTransceiver(Protocol):
 
     def connectionMade(self):
         self.state = 'OPEN'
-        print 'STATE :', self.name, ':', self.state
+        print self.name, 'STATE :', self.state
         pdu = BindTransceiver(self.getSeq(), **self.defaults)
         self.incSeq()
-        self.transport.write(pdu.get_bin())
+        self.sendPDU(pdu)
 
 
     def connectionLost(self, *args, **kwargs):
         self.state = 'CLOSED'
-        print 'STATE :', self.name, ':', self.state
+        print self.name, 'STATE :', self.state
         try:
             self.lc_enquire.stop()
             del self.lc_enquire
-            print self.name, 'stop & del looping call'
+            print self.name, 'stop & del enquire link looping call'
+        except:
+            pass
+        try:
+            self.lc_testSM.stop()
+            del self.lc_testSM
+            print self.name, 'stop & del test SM looping call'
         except:
             pass
 
@@ -83,11 +89,23 @@ class EsmeTransceiver(Protocol):
             data = self.popData()
 
 
+    def sendPDU(self, pdu):
+        print 'OUTGOING >>>>', pdu.get_obj()
+        self.transport.write(pdu.get_bin())
+
+
+    def testSM(self):
+        text = 'This is a test SMS with sequence number ' + str(self.seq)
+        self.submit_sm(short_message=text, destination_addr='27999123456')
+
+
     def handle_bind_transceiver_resp(self, pdu):
         if pdu['header']['command_status'] == 'ESME_ROK':
             self.state = 'BOUND_TRX'
             self.lc_enquire = LoopingCall(self.enquire_link)
             self.lc_enquire.start(55.0)
+            self.lc_testSM = LoopingCall(self.testSM)
+            self.lc_testSM.start(60.0)
             #self.submit_sm(
                     #short_message = 'gobbledygook',
                     #destination_addr = '555',
@@ -103,7 +121,7 @@ class EsmeTransceiver(Protocol):
                         #{'dest_flag':2, 'dl_name':'list22222'},
                         #],
                     #)
-        print 'STATE :', self.name, ':', self.state
+        print self.name, 'STATE :', self.state
 
 
     def handle_submit_sm_resp(self, pdu):
@@ -120,8 +138,7 @@ class EsmeTransceiver(Protocol):
         if pdu['header']['command_status'] == 'ESME_ROK':
             sequence_number = pdu['header']['sequence_number']
             pdu = DeliverSMResp(sequence_number, **self.defaults)
-            print pdu.get_obj()
-            self.transport.write(pdu.get_bin())
+            self.sendPDU(pdu)
 
 
     def handle_enquire_link_resp(self, pdu):
@@ -133,7 +150,7 @@ class EsmeTransceiver(Protocol):
         if self.state in ['BOUND_TX', 'BOUND_TRX']:
             pdu = SubmitSM(self.getSeq(), **dict(self.defaults, **kwargs))
             self.incSeq()
-            self.transport.write(pdu.get_bin())
+            self.sendPDU(pdu)
 
 
     def submit_multi(self, dest_address=[], **kwargs):
@@ -158,16 +175,14 @@ class EsmeTransceiver(Protocol):
                     elif item.get('dest_flag') == 2:
                         pdu.addDistributionList(item.get('dl_name'))
             self.incSeq()
-            self.transport.write(pdu.get_bin())
+            self.sendPDU(pdu)
 
 
     def enquire_link(self, **kwargs):
-        print self.name, 'wants to Enquire Link.'
         if self.state in ['BOUND_TX', 'BOUND_TRX']:
-            print self.name, 'enquiring about link.'
             pdu = EnquireLink(self.getSeq(), **dict(self.defaults, **kwargs))
             self.incSeq()
-            self.transport.write(pdu.get_bin())
+            self.sendPDU(pdu)
 
 
 class EsmeTransceiverFactory(ReconnectingClientFactory):

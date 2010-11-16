@@ -1,4 +1,7 @@
 
+from twisted.python import log
+#log.startLogging(open('tests.log', 'w'))
+
 from twisted_smpp.client import *
 from smpp.clickatell import *
 
@@ -11,7 +14,9 @@ except:pass
 esmeTransFact = EsmeTransceiverFactory()
 esmeTransFact.loadDefaults(clickatell_defaults)
 esmeTransFact.loadDefaults(credentials_test.logica)
-print esmeTransFact.defaults
+
+print 'Factory Defaults:', esmeTransFact.defaults, '\n'
+
 reactor.connectTCP(
         esmeTransFact.defaults['host'],
         esmeTransFact.defaults['port'],

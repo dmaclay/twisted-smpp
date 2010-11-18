@@ -109,7 +109,7 @@ class EsmeTransceiver(Protocol):
             #self.lc_testSM.start(60.0)
             self.submit_sm(
                     short_message = 'Hello from twisted-smpp',
-                    destination_addr = '27763805186',
+                    destination_addr = '27999123456',
                     )
             #self.submit_multi(
                     #short_message = 'gobbledygook',

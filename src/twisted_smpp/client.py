@@ -73,12 +73,12 @@ class EsmeTransceiver(Protocol):
             print self.name, 'stop & del enquire link looping call'
         except:
             pass
-        try:
-            self.lc_testSM.stop()
-            del self.lc_testSM
-            print self.name, 'stop & del test SM looping call'
-        except:
-            pass
+        #try:
+            #self.lc_testSM.stop()
+            #del self.lc_testSM
+            #print self.name, 'stop & del test SM looping call'
+        #except:
+            #pass
 
 
     def dataReceived(self, data):
@@ -105,12 +105,12 @@ class EsmeTransceiver(Protocol):
             self.state = 'BOUND_TRX'
             self.lc_enquire = LoopingCall(self.enquire_link)
             self.lc_enquire.start(55.0)
-            self.lc_testSM = LoopingCall(self.testSM)
-            self.lc_testSM.start(60.0)
-            #self.submit_sm(
-                    #short_message = 'gobbledygook',
-                    #destination_addr = '555',
-                    #)
+            #self.lc_testSM = LoopingCall(self.testSM)
+            #self.lc_testSM.start(60.0)
+            self.submit_sm(
+                    short_message = 'Hello from twisted-smpp',
+                    destination_addr = '27763805186',
+                    )
             #self.submit_multi(
                     #short_message = 'gobbledygook',
                     #dest_address = ['444','333'],

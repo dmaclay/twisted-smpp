@@ -4,3 +4,5 @@
 ve/
 *_priv.py
 *.log
+*.cache
+
